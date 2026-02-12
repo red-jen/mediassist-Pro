@@ -1,0 +1,2 @@
+# This file keeps the data/ directory tracked by git.
+# Actual data files (chroma_db, pdfs, uploads) are in .gitignore.

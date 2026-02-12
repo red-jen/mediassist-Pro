@@ -1,0 +1,62 @@
+# Python
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+*.so
+.Python
+*.egg-info/
+.eggs/
+dist/
+build/
+*.spec
+.mypy_cache/
+.ruff_cache/
+
+# Virtual environment
+venv/
+.venv/
+env/
+
+# Environment / secrets
+.env
+.env.*
+!.env.example
+
+# Database files
+*.db
+*.sqlite
+*.sqlite3
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Test artefacts
+.pytest_cache/
+.coverage
+htmlcov/
+*.log
+
+# Data — keep structure but not content
+data/chroma_db/
+data/uploads/
+data/pdfs/
+data/processed/
+!data/.gitkeep
+
+# MLflow local tracking
+mlruns/
+mlflow.db
+
+# Docker
+*.tar
+
+# Kubernetes secrets (never commit)
+k8s/secrets-prod.yaml

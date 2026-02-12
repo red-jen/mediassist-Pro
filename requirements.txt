@@ -1,0 +1,46 @@
+# === LEARNING-FOCUSED RAG IMPLEMENTATION ===
+# Each dependency is chosen for specific educational value
+
+# 1. PDF Processing & Text Extraction
+PyPDF2>=3.0.0                      # Simple PDF text extraction
+python-dotenv>=1.0.0              # Environment configuration
+
+# 2. LangChain Ecosystem (RAG Framework)
+langchain>=0.2.0                   # Core RAG orchestration
+langchain-text-splitters>=0.2.0   # Intelligent text chunking
+langchain-community>=0.2.0         # Community integrations
+
+# 3. Embeddings & Vector Storage
+sentence-transformers>=2.2.0       # Local embeddings (no API needed)
+chromadb>=0.4.0                   # Lightweight vector database
+
+# 4. FastAPI Web Framework
+fastapi>=0.100.0                  # Modern async API framework
+uvicorn>=0.20.0                   # ASGI server for FastAPI
+pydantic>=2.0.0                   # Data validation & serialization
+pydantic-settings>=2.0.0          # Settings management
+
+# 5. Database & Authentication
+sqlalchemy>=2.0.0                 # SQL toolkit and ORM
+passlib[bcrypt]>=1.7.0            # Password hashing
+python-jose[cryptography]>=3.3.0   # JWT token handling
+python-multipart>=0.0.5           # File upload support
+
+# 6. Testing & Development
+pytest>=7.0.0                     # Testing framework
+pytest-asyncio>=0.21.0            # Async test support
+httpx>=0.25.0                     # HTTP client for API testing
+
+# 7. LLMOps - MLflow Experiment Tracking
+mlflow>=2.13.0                    # Experiment tracking & model registry
+langchain-mlflow>=0.1.0           # LangChain MLflow integration
+
+# 8. LLMOps - RAG Evaluation
+deepeval>=1.0.0                   # RAG metrics: Faithfulness, Relevance, Precision@k
+
+# 9. LLMOps - Prometheus Monitoring
+prometheus-client>=0.20.0         # Expose /metrics for Prometheus scraping
+starlette-prometheus>=0.3.0       # FastAPI Prometheus middleware
+
+# 10. LLMOps - Utilities
+bcrypt>=4.0.0                     # Direct bcrypt (used in reset_db)
