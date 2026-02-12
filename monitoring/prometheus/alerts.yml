@@ -1,0 +1,122 @@
+# ============================================================
+# PROMETHEUS ALERTING RULES — MediAssist Pro
+# ============================================================
+# Alerts are triggered when conditions hold for `for` duration.
+# Routed to Alertmanager → webhook / email / Slack.
+# ============================================================
+
+groups:
+
+  # ── RAG Quality Alerts ──────────────────────────────────────
+  - name: rag_quality
+    rules:
+
+      - alert: LowRAGConfidence
+        expr: mediassist_rag_confidence_last < 0.4
+        for: 2m
+        labels:
+          severity: warning
+        annotations:
+          summary: "RAG confidence is below threshold"
+          description: >
+            The last RAG response had confidence {{ $value | printf "%.2f" }},
+            which is below the 0.4 warning threshold.
+            Check the retrieved document quality and the similarity threshold setting.
+
+      - alert: LowFaithfulness
+        expr: mediassist_rag_faithfulness_last < 0.5
+        for: 2m
+        labels:
+          severity: warning
+        annotations:
+          summary: "RAG faithfulness score is low — possible hallucination"
+          description: >
+            Faithfulness score is {{ $value | printf "%.2f" }}.
+            The model may be generating content not grounded in the retrieved context.
+
+      - alert: LowAnswerRelevance
+        expr: mediassist_rag_answer_relevance_last < 0.4
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "Answer relevance has degraded"
+          description: >
+            Answer relevance score = {{ $value | printf "%.2f" }}.
+            Responses may not be addressing user questions accurately.
+
+  # ── Latency Alerts ──────────────────────────────────────────
+  - name: rag_latency
+    rules:
+
+      - alert: HighRAGLatency
+        expr: |
+          histogram_quantile(0.95,
+            rate(mediassist_rag_latency_seconds_bucket[5m])
+          ) > 10
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "95th-percentile RAG latency > 10 s"
+          description: >
+            p95 RAG latency is {{ $value | printf "%.1f" }} s.
+            Consider checking LLM performance or reducing context window.
+
+      - alert: CriticalRAGLatency
+        expr: |
+          histogram_quantile(0.99,
+            rate(mediassist_rag_latency_seconds_bucket[5m])
+          ) > 30
+        for: 2m
+        labels:
+          severity: critical
+        annotations:
+          summary: "p99 RAG latency exceeded 30 s — SLA breach risk"
+          description: >
+            p99 RAG latency = {{ $value | printf "%.1f" }} s.
+            Immediate investigation required.
+
+  # ── Error Rate Alerts ────────────────────────────────────────
+  - name: rag_errors
+    rules:
+
+      - alert: HighErrorRate
+        expr: |
+          rate(mediassist_rag_errors_total[5m]) > 0.1
+        for: 3m
+        labels:
+          severity: critical
+        annotations:
+          summary: "RAG error rate is elevated"
+          description: >
+            Error rate = {{ $value | printf "%.3f" }} errors/s over the last 5 min.
+            Check application logs and LLM connectivity.
+
+  # ── Availability Alert ───────────────────────────────────────
+  - name: availability
+    rules:
+
+      - alert: AppDown
+        expr: up{job="mediassist"} == 0
+        for: 1m
+        labels:
+          severity: critical
+        annotations:
+          summary: "MediAssist application is down"
+          description: "The /metrics endpoint has been unreachable for more than 1 minute."
+
+  # ── Documents in store ───────────────────────────────────────
+  - name: knowledge_base
+    rules:
+
+      - alert: EmptyKnowledgeBase
+        expr: mediassist_docs_in_vectorstore == 0
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "No documents in the vector store"
+          description: >
+            The ChromaDB collection is empty — all queries will return
+            'no documentation available' responses. Upload PDF manuals.

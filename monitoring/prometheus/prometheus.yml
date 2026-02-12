@@ -1,0 +1,44 @@
+# ============================================================
+# PROMETHEUS CONFIGURATION
+# ============================================================
+# Scrapes metrics from:
+#   - MediAssist app  (/metrics  every 15 s)
+#   - Prometheus itself
+#
+# Alerting rules are in alerts.yml
+# ============================================================
+
+global:
+  scrape_interval: 15s          # How often to scrape targets
+  evaluation_interval: 15s      # How often to evaluate alert rules
+  scrape_timeout: 10s
+
+# Load alerting rules
+rule_files:
+  - "alerts.yml"
+
+# Alertmanager connection
+alerting:
+  alertmanagers:
+    - static_configs:
+        - targets:
+            - alertmanager:9093
+
+# ── Scrape Configurations ────────────────────────────────────
+scrape_configs:
+
+  # Self-monitoring
+  - job_name: "prometheus"
+    static_configs:
+      - targets: ["localhost:9090"]
+
+  # MediAssist RAG application
+  - job_name: "mediassist"
+    metrics_path: "/metrics"
+    scrape_interval: 15s
+    static_configs:
+      - targets: ["mediassist:8000"]
+    relabel_configs:
+      - source_labels: [__address__]
+        target_label: instance
+        replacement: "mediassist_app"

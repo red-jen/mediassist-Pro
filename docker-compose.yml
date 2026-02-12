@@ -1,0 +1,140 @@
+# ============================================================
+# DOCKER COMPOSE — Full MLOps Stack
+# ============================================================
+# Services:
+#   mediassist   → FastAPI RAG application       :8000
+#   mlflow       → Experiment tracking UI        :5000
+#   prometheus   → Metrics scraper               :9090
+#   grafana      → Metrics dashboards            :3000
+#   alertmanager → Alert routing                 :9093
+# ============================================================
+
+version: "3.9"
+
+# ── Shared network ───────────────────────────────────────────
+networks:
+  mediassist_net:
+    driver: bridge
+
+# ── Named volumes for persistence ────────────────────────────
+volumes:
+  chroma_data:
+  mlflow_data:
+  prometheus_data:
+  grafana_data:
+
+# ── Services ─────────────────────────────────────────────────
+services:
+
+  # ── MediAssist Pro RAG Application ─────────────────────────
+  mediassist:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      target: runtime
+    container_name: mediassist_app
+    restart: unless-stopped
+    environment:
+      # Override .env values for Docker networking
+      DATABASE_URL: sqlite:///./mediassist.db
+      MLFLOW_TRACKING_URI: http://mlflow:5000
+      PERSIST_DIRECTORY: /app/data/chroma_db
+      API_HOST: 0.0.0.0
+      API_PORT: "8000"
+      DEBUG: "false"
+    ports:
+      - "8000:8000"
+    volumes:
+      - chroma_data:/app/data/chroma_db
+      - ./data/pdfs:/app/data/pdfs:ro      # Mount PDFs read-only
+      - ./data/uploads:/app/data/uploads
+    depends_on:
+      - mlflow
+    networks:
+      - mediassist_net
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 90s
+
+  # ── MLflow Tracking Server ──────────────────────────────────
+  mlflow:
+    image: python:3.12-slim
+    container_name: mediassist_mlflow
+    restart: unless-stopped
+    command: >
+      bash -c "pip install mlflow>=2.13.0 --quiet &&
+               mlflow server
+               --backend-store-uri sqlite:///mlflow/mlflow.db
+               --default-artifact-root /mlflow/artifacts
+               --host 0.0.0.0
+               --port 5000"
+    ports:
+      - "5000:5000"
+    volumes:
+      - mlflow_data:/mlflow
+    networks:
+      - mediassist_net
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:5000/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 30s
+
+  # ── Prometheus Metrics Scraper ──────────────────────────────
+  prometheus:
+    image: prom/prometheus:v2.51.0
+    container_name: mediassist_prometheus
+    restart: unless-stopped
+    command:
+      - "--config.file=/etc/prometheus/prometheus.yml"
+      - "--storage.tsdb.path=/prometheus"
+      - "--storage.tsdb.retention.time=15d"
+      - "--web.enable-lifecycle"
+      - "--web.enable-admin-api"
+    ports:
+      - "9090:9090"
+    volumes:
+      - ./monitoring/prometheus/prometheus.yml:/etc/prometheus/prometheus.yml:ro
+      - ./monitoring/prometheus/alerts.yml:/etc/prometheus/alerts.yml:ro
+      - prometheus_data:/prometheus
+    depends_on:
+      - mediassist
+    networks:
+      - mediassist_net
+
+  # ── Alertmanager ──────────────────────────────────────────
+  alertmanager:
+    image: prom/alertmanager:v0.27.0
+    container_name: mediassist_alertmanager
+    restart: unless-stopped
+    ports:
+      - "9093:9093"
+    volumes:
+      - ./monitoring/alertmanager/alertmanager.yml:/etc/alertmanager/alertmanager.yml:ro
+    networks:
+      - mediassist_net
+
+  # ── Grafana Dashboards ──────────────────────────────────────
+  grafana:
+    image: grafana/grafana:10.4.0
+    container_name: mediassist_grafana
+    restart: unless-stopped
+    environment:
+      GF_SECURITY_ADMIN_USER: admin
+      GF_SECURITY_ADMIN_PASSWORD: mediassist2026
+      GF_USERS_ALLOW_SIGN_UP: "false"
+      GF_SERVER_ROOT_URL: http://localhost:3000
+    ports:
+      - "3000:3000"
+    volumes:
+      - grafana_data:/var/lib/grafana
+      - ./monitoring/grafana/provisioning:/etc/grafana/provisioning:ro
+      - ./monitoring/grafana/dashboards:/var/lib/grafana/dashboards:ro
+    depends_on:
+      - prometheus
+    networks:
+      - mediassist_net

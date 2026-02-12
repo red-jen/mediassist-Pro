@@ -1,0 +1,236 @@
+{
+  "__inputs": [],
+  "__requires": [
+    { "type": "grafana", "id": "grafana", "name": "Grafana", "version": "10.4.0" },
+    { "type": "datasource", "id": "prometheus", "name": "Prometheus", "version": "1.0.0" },
+    { "type": "panel", "id": "timeseries", "name": "Time series", "version": "" },
+    { "type": "panel", "id": "stat", "name": "Stat", "version": "" },
+    { "type": "panel", "id": "gauge", "name": "Gauge", "version": "" }
+  ],
+  "id": null,
+  "uid": "mediassist-rag-001",
+  "title": "MediAssist Pro — RAG & Infrastructure",
+  "description": "End-to-end monitoring for the MediAssist Pro RAG system",
+  "tags": ["rag", "mediassist", "llmops"],
+  "timezone": "browser",
+  "schemaVersion": 38,
+  "version": 1,
+  "refresh": "30s",
+  "time": { "from": "now-1h", "to": "now" },
+  "templating": { "list": [] },
+  "annotations": {
+    "list": [
+      {
+        "builtIn": 1,
+        "datasource": { "type": "grafana", "uid": "-- Grafana --" },
+        "enable": true,
+        "hide": true,
+        "iconColor": "rgba(0, 211, 255, 1)",
+        "name": "Annotations & Alerts",
+        "type": "dashboard"
+      }
+    ]
+  },
+  "panels": [
+    {
+      "id": 1,
+      "gridPos": { "h": 4, "w": 4, "x": 0, "y": 0 },
+      "type": "stat",
+      "title": "RAG Queries (total)",
+      "datasource": { "type": "prometheus", "uid": "Prometheus" },
+      "options": { "reduceOptions": { "calcs": ["lastNotNull"] }, "colorMode": "background", "graphMode": "area" },
+      "fieldConfig": { "defaults": { "color": { "mode": "thresholds" }, "thresholds": { "mode": "absolute", "steps": [{ "color": "blue", "value": null }] } } },
+      "targets": [
+        {
+          "expr": "sum(mediassist_rag_queries_total)",
+          "legendFormat": "Total queries",
+          "refId": "A"
+        }
+      ]
+    },
+    {
+      "id": 2,
+      "gridPos": { "h": 4, "w": 4, "x": 4, "y": 0 },
+      "type": "stat",
+      "title": "Last Confidence Score",
+      "datasource": { "type": "prometheus", "uid": "Prometheus" },
+      "options": { "reduceOptions": { "calcs": ["lastNotNull"] }, "colorMode": "background", "graphMode": "none", "unit": "percentunit" },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "percentunit",
+          "thresholds": { "mode": "absolute", "steps": [
+            { "color": "red", "value": null },
+            { "color": "orange", "value": 0.4 },
+            { "color": "green", "value": 0.7 }
+          ]}
+        }
+      },
+      "targets": [{ "expr": "mediassist_rag_confidence_last", "refId": "A" }]
+    },
+    {
+      "id": 3,
+      "gridPos": { "h": 4, "w": 4, "x": 8, "y": 0 },
+      "type": "stat",
+      "title": "Last Faithfulness",
+      "datasource": { "type": "prometheus", "uid": "Prometheus" },
+      "options": { "reduceOptions": { "calcs": ["lastNotNull"] }, "colorMode": "background", "unit": "percentunit" },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "percentunit",
+          "thresholds": { "mode": "absolute", "steps": [
+            { "color": "red", "value": null },
+            { "color": "orange", "value": 0.5 },
+            { "color": "green", "value": 0.75 }
+          ]}
+        }
+      },
+      "targets": [{ "expr": "mediassist_rag_faithfulness_last", "refId": "A" }]
+    },
+    {
+      "id": 4,
+      "gridPos": { "h": 4, "w": 4, "x": 12, "y": 0 },
+      "type": "stat",
+      "title": "Last Answer Relevance",
+      "datasource": { "type": "prometheus", "uid": "Prometheus" },
+      "options": { "reduceOptions": { "calcs": ["lastNotNull"] }, "colorMode": "background" },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "percentunit",
+          "thresholds": { "mode": "absolute", "steps": [
+            { "color": "red", "value": null },
+            { "color": "orange", "value": 0.4 },
+            { "color": "green", "value": 0.7 }
+          ]}
+        }
+      },
+      "targets": [{ "expr": "mediassist_rag_answer_relevance_last", "refId": "A" }]
+    },
+    {
+      "id": 5,
+      "gridPos": { "h": 4, "w": 4, "x": 16, "y": 0 },
+      "type": "stat",
+      "title": "Docs in Vector Store",
+      "datasource": { "type": "prometheus", "uid": "Prometheus" },
+      "options": { "reduceOptions": { "calcs": ["lastNotNull"] }, "colorMode": "background" },
+      "fieldConfig": {
+        "defaults": {
+          "thresholds": { "mode": "absolute", "steps": [
+            { "color": "red", "value": null },
+            { "color": "green", "value": 1 }
+          ]}
+        }
+      },
+      "targets": [{ "expr": "mediassist_docs_in_vectorstore", "refId": "A" }]
+    },
+    {
+      "id": 6,
+      "gridPos": { "h": 4, "w": 4, "x": 20, "y": 0 },
+      "type": "stat",
+      "title": "Active Users",
+      "datasource": { "type": "prometheus", "uid": "Prometheus" },
+      "options": { "reduceOptions": { "calcs": ["lastNotNull"] }, "colorMode": "value" },
+      "targets": [{ "expr": "mediassist_active_users", "refId": "A" }]
+    },
+    {
+      "id": 10,
+      "gridPos": { "h": 8, "w": 12, "x": 0, "y": 4 },
+      "type": "timeseries",
+      "title": "RAG Query Rate (req/s)",
+      "datasource": { "type": "prometheus", "uid": "Prometheus" },
+      "options": { "tooltip": { "mode": "multi" } },
+      "fieldConfig": { "defaults": { "unit": "reqps", "custom": { "lineWidth": 2 } } },
+      "targets": [
+        {
+          "expr": "rate(mediassist_rag_queries_total{status='success'}[5m])",
+          "legendFormat": "Success",
+          "refId": "A"
+        },
+        {
+          "expr": "rate(mediassist_rag_queries_total{status='error'}[5m])",
+          "legendFormat": "Error",
+          "refId": "B"
+        }
+      ]
+    },
+    {
+      "id": 11,
+      "gridPos": { "h": 8, "w": 12, "x": 12, "y": 4 },
+      "type": "timeseries",
+      "title": "RAG Latency Percentiles",
+      "datasource": { "type": "prometheus", "uid": "Prometheus" },
+      "options": { "tooltip": { "mode": "multi" } },
+      "fieldConfig": { "defaults": { "unit": "s", "custom": { "lineWidth": 2 } } },
+      "targets": [
+        {
+          "expr": "histogram_quantile(0.50, rate(mediassist_rag_latency_seconds_bucket[5m]))",
+          "legendFormat": "p50",
+          "refId": "A"
+        },
+        {
+          "expr": "histogram_quantile(0.95, rate(mediassist_rag_latency_seconds_bucket[5m]))",
+          "legendFormat": "p95",
+          "refId": "B"
+        },
+        {
+          "expr": "histogram_quantile(0.99, rate(mediassist_rag_latency_seconds_bucket[5m]))",
+          "legendFormat": "p99",
+          "refId": "C"
+        }
+      ]
+    },
+    {
+      "id": 20,
+      "gridPos": { "h": 8, "w": 12, "x": 0, "y": 12 },
+      "type": "timeseries",
+      "title": "RAG Quality Metrics Over Time",
+      "datasource": { "type": "prometheus", "uid": "Prometheus" },
+      "options": { "tooltip": { "mode": "multi" } },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "percentunit",
+          "min": 0,
+          "max": 1,
+          "custom": { "lineWidth": 2 }
+        }
+      },
+      "targets": [
+        { "expr": "mediassist_rag_confidence_last", "legendFormat": "Confidence", "refId": "A" },
+        { "expr": "mediassist_rag_faithfulness_last", "legendFormat": "Faithfulness", "refId": "B" },
+        { "expr": "mediassist_rag_answer_relevance_last", "legendFormat": "Answer Relevance", "refId": "C" },
+        { "expr": "mediassist_rag_precision_k_last", "legendFormat": "Precision@k", "refId": "D" },
+        { "expr": "mediassist_rag_recall_k_last", "legendFormat": "Recall@k", "refId": "E" }
+      ]
+    },
+    {
+      "id": 21,
+      "gridPos": { "h": 8, "w": 12, "x": 12, "y": 12 },
+      "type": "timeseries",
+      "title": "Error Rate",
+      "datasource": { "type": "prometheus", "uid": "Prometheus" },
+      "options": { "tooltip": { "mode": "multi" } },
+      "fieldConfig": { "defaults": { "unit": "reqps", "custom": { "lineWidth": 2 } } },
+      "targets": [
+        {
+          "expr": "rate(mediassist_rag_errors_total[5m])",
+          "legendFormat": "{{error_type}}",
+          "refId": "A"
+        }
+      ]
+    },
+    {
+      "id": 30,
+      "gridPos": { "h": 8, "w": 24, "x": 0, "y": 20 },
+      "type": "timeseries",
+      "title": "HTTP Request Rate by Endpoint",
+      "datasource": { "type": "prometheus", "uid": "Prometheus" },
+      "fieldConfig": { "defaults": { "unit": "reqps" } },
+      "targets": [
+        {
+          "expr": "rate(mediassist_http_requests_total[5m])",
+          "legendFormat": "{{method}} {{endpoint}} ({{status_code}})",
+          "refId": "A"
+        }
+      ]
+    }
+  ]
+}
