@@ -1,0 +1,44 @@
+---
+# ============================================================
+# KUBERNETES CONFIGMAP — MediAssist Pro environment vars
+# ============================================================
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: mediassist-config
+  namespace: default
+  labels:
+    app: mediassist
+data:
+  CHUNK_SIZE: "800"
+  CHUNK_OVERLAP: "100"
+  EMBEDDING_MODEL: "sentence-transformers/all-MiniLM-L6-v2"
+  EMBEDDING_DIMENSION: "384"
+  COLLECTION_NAME: "biomedical_manuals"
+  PERSIST_DIRECTORY: "/app/data/chroma_db"
+  TOP_K: "5"
+  SIMILARITY_THRESHOLD: "0.1"
+  LLM_MODEL: "llama3.2"
+  DATABASE_URL: "sqlite:///./mediassist.db"
+  JWT_ALGORITHM: "HS256"
+  JWT_EXPIRE_MINUTES: "60"
+  API_HOST: "0.0.0.0"
+  API_PORT: "8000"
+  DEBUG: "false"
+  MLFLOW_TRACKING_URI: "http://mlflow-service:5000"
+
+---
+# ============================================================
+# KUBERNETES SECRET — sensitive values
+# ============================================================
+apiVersion: v1
+kind: Secret
+metadata:
+  name: mediassist-secrets
+  namespace: default
+  labels:
+    app: mediassist
+type: Opaque
+stringData:
+  JWT_SECRET_KEY: "your-super-secret-jwt-key-change-in-production"
+  # OPENAI_API_KEY: ""    # Uncomment if using OpenAI

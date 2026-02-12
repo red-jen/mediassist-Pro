@@ -1,0 +1,115 @@
+---
+# ============================================================
+# KUBERNETES DEPLOYMENT — MediAssist Pro (single pod)
+# ============================================================
+# One pod as required by the project brief (Minikube / dev).
+# Scale replicas for production.
+# ============================================================
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: mediassist
+  namespace: default
+  labels:
+    app: mediassist
+    version: "1.0.0"
+    component: api
+spec:
+  replicas: 1   # Single pod as required by the brief
+  selector:
+    matchLabels:
+      app: mediassist
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxUnavailable: 0
+      maxSurge: 1
+  template:
+    metadata:
+      labels:
+        app: mediassist
+        version: "1.0.0"
+      annotations:
+        # Tell Prometheus to scrape this pod directly
+        prometheus.io/scrape: "true"
+        prometheus.io/port: "8000"
+        prometheus.io/path: "/metrics"
+    spec:
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 1000
+        fsGroup: 1000
+
+      containers:
+        - name: mediassist
+          # Image built and pushed by CI/CD pipeline
+          image: $DOCKER_USERNAME/mediassist-pro:latest
+          imagePullPolicy: Always
+          ports:
+            - name: http
+              containerPort: 8000
+              protocol: TCP
+
+          # Environment from ConfigMap
+          envFrom:
+            - configMapRef:
+                name: mediassist-config
+            - secretRef:
+                name: mediassist-secrets
+
+          # Resource limits (adjust for your node)
+          resources:
+            requests:
+              memory: "512Mi"
+              cpu: "250m"
+            limits:
+              memory: "2Gi"
+              cpu: "1000m"
+
+          # Liveness: restart if the app hangs
+          livenessProbe:
+            httpGet:
+              path: /health
+              port: 8000
+            initialDelaySeconds: 90
+            periodSeconds: 30
+            timeoutSeconds: 10
+            failureThreshold: 3
+
+          # Readiness: don't route traffic until warm
+          readinessProbe:
+            httpGet:
+              path: /health
+              port: 8000
+            initialDelaySeconds: 30
+            periodSeconds: 15
+            timeoutSeconds: 5
+            failureThreshold: 3
+
+          # Persistent volume for ChromaDB and uploads
+          volumeMounts:
+            - name: chroma-storage
+              mountPath: /app/data/chroma_db
+            - name: uploads-storage
+              mountPath: /app/data/uploads
+
+      volumes:
+        - name: chroma-storage
+          persistentVolumeClaim:
+            claimName: chroma-pvc
+        - name: uploads-storage
+          emptyDir: {}
+
+---
+# ── PersistentVolumeClaim for ChromaDB ───────────────────────
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: chroma-pvc
+  namespace: default
+spec:
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 2Gi

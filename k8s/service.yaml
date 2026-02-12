@@ -1,0 +1,95 @@
+---
+# ============================================================
+# KUBERNETES SERVICE — MediAssist Pro
+# ============================================================
+# NodePort for Minikube access (use LoadBalancer in cloud).
+# ============================================================
+apiVersion: v1
+kind: Service
+metadata:
+  name: mediassist-service
+  namespace: default
+  labels:
+    app: mediassist
+spec:
+  selector:
+    app: mediassist
+  type: NodePort          # Accessible via: minikube service mediassist-service
+  ports:
+    - name: http
+      protocol: TCP
+      port: 80
+      targetPort: 8000
+      nodePort: 30080     # http://<minikube-ip>:30080
+
+---
+# ============================================================
+# KUBERNETES SERVICE — MLflow
+# ============================================================
+apiVersion: v1
+kind: Service
+metadata:
+  name: mlflow-service
+  namespace: default
+  labels:
+    app: mlflow
+spec:
+  selector:
+    app: mlflow
+  type: NodePort
+  ports:
+    - name: mlflow
+      protocol: TCP
+      port: 5000
+      targetPort: 5000
+      nodePort: 30500     # http://<minikube-ip>:30500
+
+---
+# ============================================================
+# KUBERNETES DEPLOYMENT — MLflow (lightweight SQLite backend)
+# ============================================================
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: mlflow
+  namespace: default
+  labels:
+    app: mlflow
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: mlflow
+  template:
+    metadata:
+      labels:
+        app: mlflow
+    spec:
+      containers:
+        - name: mlflow
+          image: python:3.12-slim
+          command:
+            - /bin/bash
+            - -c
+            - |
+              pip install mlflow>=2.13.0 --quiet &&
+              mlflow server
+              --backend-store-uri sqlite:///mlflow/mlflow.db
+              --default-artifact-root /mlflow/artifacts
+              --host 0.0.0.0
+              --port 5000
+          ports:
+            - containerPort: 5000
+          resources:
+            requests:
+              memory: "256Mi"
+              cpu: "100m"
+            limits:
+              memory: "512Mi"
+              cpu: "500m"
+          volumeMounts:
+            - name: mlflow-storage
+              mountPath: /mlflow
+      volumes:
+        - name: mlflow-storage
+          emptyDir: {}         # Use PVC for production persistence
