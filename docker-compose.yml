@@ -1,0 +1,129 @@
+# ─────────────────────────────────────────────────────────────────────────────
+# docker-compose.yml — MediAssist Pro
+# ─────────────────────────────────────────────────────────────────────────────
+#
+# Services:
+#   api        — FastAPI backend (built from Dockerfile)
+#   db         — PostgreSQL 16 database
+#   prometheus — Metrics collection (scrapes /metrics from api)
+#   grafana    — Metrics visualization dashboards
+#
+# External dependency:
+#   Ollama — runs on the HOST machine (not containerized).
+#   The `api` container reaches it via http://host.docker.internal:11434
+#
+# Usage:
+#   docker compose up --build          # first run
+#   docker compose up                  # subsequent runs
+#   docker compose down                # stop and remove containers
+#   docker compose down -v             # also delete the postgres volume
+
+services:
+
+  # ── API (FastAPI) ───────────────────────────────────────────────────────────
+  api:
+    build:
+      context: .           # build from Dockerfile in project root
+      dockerfile: Dockerfile
+    container_name: mediassist_api
+    ports:
+      - "8000:8000"        # host:container — access at http://localhost:8000
+
+    # Environment variables for the container.
+    # DATABASE_URL overrides the one in .env so the container points to `db`
+    # (the postgres service name) instead of `localhost`.
+    environment:
+      DATABASE_URL:               postgresql://postgres:postgres@db:5432/mediassist
+      SECRET_KEY:                 ${SECRET_KEY}          # read from .env on host
+      ALGORITHM:                  HS256
+      ACCESS_TOKEN_EXPIRE_MINUTES: 30
+      OLLAMA_BASE_URL:            http://host.docker.internal:11434  # reach host Ollama
+
+    # Persistent volumes:
+    #   chroma_db  — ChromaDB vector store survives container restarts
+    #   mlruns     — MLflow experiment data survives container restarts
+    volumes:
+      - ./chroma_db:/app/chroma_db
+      - ./mlruns:/app/mlruns
+      - ./mlflow.db:/app/mlflow.db
+
+    # Wait for postgres to be healthy before starting the API
+    depends_on:
+      db:
+        condition: service_healthy
+
+    # Allows the container to reach the Docker host at `host.docker.internal`.
+    # Required on Linux (Docker Desktop on Windows/Mac handles this automatically).
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+
+    # Restart on crash (except when stopped manually)
+    restart: unless-stopped
+
+  # ── PostgreSQL ───────────────────────────────────────────────────────────────
+  db:
+    image: postgres:16-alpine      # Alpine = smaller image (~80 MB vs ~400 MB)
+    container_name: mediassist_db
+    environment:
+      POSTGRES_USER:     postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB:       mediassist
+
+    # Named volume so data persists when the container is re-created
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+
+    # Only expose to host during development (remove in production)
+    ports:
+      - "5433:5432"   # mapped to 5433 on host to avoid conflict with local postgres
+
+    # Health check: postgres is ready when pg_isready succeeds
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d mediassist"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
+
+    restart: unless-stopped
+
+  # ── Prometheus ──────────────────────────────────────────────────────────────
+  prometheus:
+    image: prom/prometheus:latest
+    container_name: mediassist_prometheus
+    ports:
+      - "9090:9090"           # Prometheus UI at http://localhost:9090
+    volumes:
+      - ./prometheus.yml:/etc/prometheus/prometheus.yml:ro
+      - prometheus_data:/prometheus
+    command:
+      - '--config.file=/etc/prometheus/prometheus.yml'
+      - '--storage.tsdb.path=/prometheus'
+    depends_on:
+      - api
+    restart: unless-stopped
+
+  # ── Grafana ─────────────────────────────────────────────────────────────────
+  grafana:
+    image: grafana/grafana:latest
+    container_name: mediassist_grafana
+    ports:
+      - "3000:3000"           # Grafana UI at http://localhost:3000
+    environment:
+      GF_SECURITY_ADMIN_USER: admin
+      GF_SECURITY_ADMIN_PASSWORD: admin
+    volumes:
+      - grafana_data:/var/lib/grafana
+      - ./grafana/provisioning/datasources:/etc/grafana/provisioning/datasources:ro
+      - ./grafana/provisioning/dashboards:/etc/grafana/provisioning/dashboards:ro
+      - ./grafana/dashboards:/var/lib/grafana/dashboards:ro
+    depends_on:
+      - prometheus
+    restart: unless-stopped
+
+# ── Named volumes ──────────────────────────────────────────────────────────────
+# Declared here so Docker manages them (survives `docker compose down`)
+volumes:
+  postgres_data:
+  prometheus_data:
+  grafana_data:

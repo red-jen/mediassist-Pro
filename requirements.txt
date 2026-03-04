@@ -1,0 +1,39 @@
+# ── Web Framework ─────────────────────────────────────────────────────────────
+fastapi==0.132.0
+uvicorn==0.41.0
+python-multipart==0.0.22        # required for file uploads (UploadFile)
+
+# ── Database ──────────────────────────────────────────────────────────────────
+sqlalchemy==2.0.46
+psycopg2-binary==2.9.11         # PostgreSQL driver
+
+# ── Validation & Config ───────────────────────────────────────────────────────
+pydantic==2.12.5
+pydantic-settings==2.13.1
+python-dotenv==1.2.1
+email-validator==2.3.0          # required for Pydantic EmailStr type
+
+# ── Authentication ────────────────────────────────────────────────────────────
+python-jose==3.5.0              # JWT creation & decoding
+passlib==1.7.4                  # password hashing
+bcrypt==4.0.1                   # bcrypt backend — pinned: 5.x breaks passlib
+
+# ── LangChain + RAG ───────────────────────────────────────────────────────────
+langchain==1.2.10
+langchain-community==0.4.1      # HuggingFaceEmbeddings, ChatOllama, Chroma
+langchain-text-splitters==1.1.1
+chromadb==1.5.1
+rank-bm25==0.2.2                # BM25 sparse retrieval
+pypdf==6.7.1                    # PDF loading
+
+# ── Embeddings & Reranking ────────────────────────────────────────────────────
+# torch is installed separately in Dockerfile (CPU-only build to reduce image size)
+sentence-transformers==5.2.3    # embedding + cross-encoder reranker
+
+# ── LLMOps ───────────────────────────────────────────────────────────────────
+mlflow==3.10.0
+deepeval==3.8.8
+
+# ── Monitoring ────────────────────────────────────────────────────────────────
+prometheus-client==0.22.0
+prometheus-fastapi-instrumentator==7.1.0

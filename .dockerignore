@@ -1,0 +1,55 @@
+# ── Python ────────────────────────────────────────────────────────────────────
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+*.so
+*.egg
+*.egg-info/
+dist/
+build/
+
+# ── Virtual environment ───────────────────────────────────────────────────────
+# Never copy the venv into the image — pip installs fresh inside Docker
+.venv/
+venv/
+env/
+
+# ── Environment secrets ───────────────────────────────────────────────────────
+# .env contains real credentials — never bake into the image
+.env
+
+# ── Git ───────────────────────────────────────────────────────────────────────
+.git/
+.gitignore
+
+# ── IDE / OS ──────────────────────────────────────────────────────────────────
+.vscode/
+.idea/
+*.DS_Store
+Thumbs.db
+
+# ── Tests & CI ────────────────────────────────────────────────────────────────
+tests/
+.pytest_cache/
+coverage/
+.coverage
+htmlcov/
+
+# ── MLflow ────────────────────────────────────────────────────────────────────
+# mlruns/ is mounted as a volume at runtime — no need to bake into image
+mlruns/
+mlflow.db
+
+# ── DeepEval ──────────────────────────────────────────────────────────────────
+.deepeval/
+
+# ── Docs & notebooks ──────────────────────────────────────────────────────────
+docs/
+*.ipynb
+*.md
+
+# ── Streamlit app (separate service if needed) ────────────────────────────────
+app.py
+chunk_pdf.py
+playground.py

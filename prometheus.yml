@@ -1,0 +1,13 @@
+# Prometheus Configuration for MediAssist Pro
+# ─────────────────────────────────────────────────────────────────────────────
+
+global:
+  scrape_interval: 15s      # How often to pull metrics from targets
+  evaluation_interval: 15s  # How often to evaluate alerting rules
+
+scrape_configs:
+  # ── FastAPI Application ─────────────────────────────────────────────────────
+  - job_name: 'mediassist-api'
+    static_configs:
+      - targets: ['api:8000']    # Docker service name
+    metrics_path: /metrics       # Default path exposed by instrumentator

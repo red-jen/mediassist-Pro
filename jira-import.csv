@@ -1,0 +1,65 @@
+Issue Type,Epic Name,Epic Link,Summary,Description,Priority,Story Points,Sprint,Status
+Epic,,,"[EPIC] Project Setup & Infrastructure","Initialize project structure, Docker, CI/CD pipeline",High,,,Done
+Task,,[EPIC] Project Setup & Infrastructure,"Initialize Python project with FastAPI","Create project folder structure, virtual environment, and install base dependencies",High,2,Sprint 1,Done
+Sub-task,,[EPIC] Project Setup & Infrastructure,"Create requirements.txt with all dependencies","List all Python packages: fastapi, uvicorn, sqlalchemy, langchain, chromadb, mlflow, deepeval, prometheus-client",Medium,1,Sprint 1,Done
+Sub-task,,[EPIC] Project Setup & Infrastructure,"Create .env and .env.example files","Define environment variables: DATABASE_URL, SECRET_KEY, OLLAMA_BASE_URL, MLFLOW_TRACKING_URI",Medium,1,Sprint 1,Done
+Sub-task,,[EPIC] Project Setup & Infrastructure,"Create .gitignore and .dockerignore","Exclude .venv, __pycache__, .env, chroma_db, mlruns from version control and Docker image",Low,1,Sprint 1,Done
+Task,,[EPIC] Project Setup & Infrastructure,"Write Dockerfile for FastAPI backend","Multi-layer Dockerfile: python:3.12-slim base, system deps, PyTorch CPU-only, pip install, healthcheck, CMD uvicorn",High,3,Sprint 1,Done
+Task,,[EPIC] Project Setup & Infrastructure,"Write docker-compose.yml","Define 4 services: api, db (postgres), prometheus, grafana with volumes, networking, healthchecks",High,3,Sprint 1,Done
+Sub-task,,[EPIC] Project Setup & Infrastructure,"Configure PostgreSQL service in compose","postgres:16-alpine image, port 5433, named volume for data persistence, healthcheck with pg_isready",Medium,1,Sprint 1,Done
+Sub-task,,[EPIC] Project Setup & Infrastructure,"Configure Prometheus and Grafana services","Add prometheus + grafana containers, mount config files, auto-provision datasource and dashboard",Medium,2,Sprint 1,Done
+Task,,[EPIC] Project Setup & Infrastructure,"Set up GitHub Actions CI/CD pipeline","Workflow: lint with flake8 → run pytest → build Docker image on push to main",High,3,Sprint 1,Done
+Epic,,,"[EPIC] Database & Authentication","PostgreSQL schema, user model, JWT auth system",High,,,Done
+Task,,[EPIC] Database & Authentication,"Set up SQLAlchemy + PostgreSQL connection","Create database.py with engine, SessionLocal, Base; config.py with pydantic-settings for DATABASE_URL",High,2,Sprint 1,Done
+Task,,[EPIC] Database & Authentication,"Create User model and schema","SQLAlchemy User model (id, username, email, hashed_password, created_at) + Pydantic schemas for request/response",High,2,Sprint 1,Done
+Task,,[EPIC] Database & Authentication,"Create Query model for audit trail","SQLAlchemy Query model (id, user_id, query, reponse, created_at) with foreign key to User",Medium,1,Sprint 1,Done
+Task,,[EPIC] Database & Authentication,"Implement JWT authentication service","auth_service.py: password hashing with bcrypt, JWT creation with python-jose, token verification",High,3,Sprint 1,Done
+Sub-task,,[EPIC] Database & Authentication,"Implement register endpoint","POST /auth/register: validate input, check duplicate username/email, hash password, save to db",High,2,Sprint 1,Done
+Sub-task,,[EPIC] Database & Authentication,"Implement login endpoint","POST /auth/login: OAuth2 form data, verify password, return JWT access_token with 30-min expiry",High,2,Sprint 1,Done
+Sub-task,,[EPIC] Database & Authentication,"Create get_current_user dependency","FastAPI Depends() that extracts and validates JWT from Authorization header, returns User object",Medium,1,Sprint 1,Done
+Epic,,,"[EPIC] RAG Pipeline Core","Document ingestion, hybrid retrieval, reranking, generation",High,,,Done
+Task,,[EPIC] RAG Pipeline Core,"Implement PDF ingestion and chunking","Load PDF with PyPDFLoader, split with RecursiveCharacterTextSplitter (chunk_size=1000, overlap=150)",High,3,Sprint 2,Done
+Sub-task,,[EPIC] RAG Pipeline Core,"Store chunks in ChromaDB (dense index)","Embed chunks with paraphrase-multilingual-MiniLM-L12-v2, store in ChromaDB with persist_directory",High,2,Sprint 2,Done
+Sub-task,,[EPIC] RAG Pipeline Core,"Build BM25 sparse index","Tokenize all chunks, create BM25Okapi index, rebuild on each new PDF upload",High,2,Sprint 2,Done
+Sub-task,,[EPIC] RAG Pipeline Core,"Add PDF deduplication logic","Track indexed filenames in a set, skip already-indexed PDFs, return status: indexed or already_exists",Medium,1,Sprint 2,Done
+Task,,[EPIC] RAG Pipeline Core,"Implement hybrid retrieval","Query both ChromaDB (k=8 dense) and BM25 (k=8 sparse), merge results, deduplicate by page_content",High,3,Sprint 2,Done
+Task,,[EPIC] RAG Pipeline Core,"Implement CrossEncoder reranking","Score all candidate chunks with cross-encoder/mmarco-mMiniLMv2-L12-H384-v1, keep top 3 most relevant",High,3,Sprint 2,Done
+Task,,[EPIC] RAG Pipeline Core,"Implement query rewriting","Use Mistral to rewrite follow-up questions into standalone queries using last 3 conversation turns",Medium,2,Sprint 2,Done
+Task,,[EPIC] RAG Pipeline Core,"Implement prompt building and LLM generation","Build medical assistant prompt in French with context + history, call Mistral 7B via Ollama (temperature=0)",High,3,Sprint 2,Done
+Sub-task,,[EPIC] RAG Pipeline Core,"Design prompt template","French medical assistant system prompt: answer only from context, say 'Information non trouvée' if not found",Medium,1,Sprint 2,Done
+Sub-task,,[EPIC] RAG Pipeline Core,"Configure Ollama connection","Read OLLAMA_BASE_URL from env, default to localhost:11434, Docker uses host.docker.internal:11434",Medium,1,Sprint 2,Done
+Task,,[EPIC] RAG Pipeline Core,"Create RAG service bridge for FastAPI","rag_service.py: connect FastAPI routes to rag_engine, save queries to db, orchestrate MLflow + DeepEval calls",High,3,Sprint 2,Done
+Task,,[EPIC] RAG Pipeline Core,"Create FastAPI RAG router","POST /rag/ask (authenticated), POST /rag/upload-pdf (authenticated), wire to rag_service",High,2,Sprint 2,Done
+Epic,,,"[EPIC] MLOps & Experiment Tracking","MLflow logging, DeepEval quality metrics, experiment comparison",High,,,Done
+Task,,[EPIC] MLOps & Experiment Tracking,"Set up MLflow experiment tracking","Configure mediassist-rag experiment, log_rag_query function with all params/metrics/artifacts",High,3,Sprint 3,Done
+Sub-task,,[EPIC] MLOps & Experiment Tracking,"Log RAG pipeline configuration params","Log 20+ params: chunk_size, overlap, embedding_model, k_dense, k_sparse, k_final, llm_model, temperature, top_p, top_k",Medium,2,Sprint 3,Done
+Sub-task,,[EPIC] MLOps & Experiment Tracking,"Log performance metrics","Log response_time_ms, query_length, answer_length, num_sources per query run",Medium,1,Sprint 3,Done
+Sub-task,,[EPIC] MLOps & Experiment Tracking,"Log quality metrics from DeepEval","Log de_answer_relevancy, de_faithfulness, de_contextual_relevancy, precision_at_k, recall_at_k",Medium,2,Sprint 3,Done
+Sub-task,,[EPIC] MLOps & Experiment Tracking,"Save Q&A artifacts as JSON","Save full query/answer/sources/scores as JSON artifact attached to each MLflow run",Medium,1,Sprint 3,Done
+Task,,[EPIC] MLOps & Experiment Tracking,"Implement DeepEval quality scoring","deepeval_service.py: compute AnswerRelevancyMetric, FaithfulnessMetric, ContextualRelevancyMetric using LLM-as-judge",High,5,Sprint 3,Done
+Sub-task,,[EPIC] MLOps & Experiment Tracking,"Configure DeepEval with local Mistral","Set DEEPEVAL_LLM to use Ollama Mistral instead of OpenAI, handle scoring errors gracefully",Medium,2,Sprint 3,Done
+Sub-task,,[EPIC] MLOps & Experiment Tracking,"Compute lexical fallback metrics","Implement precision@k and recall@k as lightweight approximations when DeepEval is unavailable",Medium,2,Sprint 3,Done
+Epic,,,"[EPIC] Monitoring & Observability","Prometheus metrics, Grafana dashboard, healthchecks",Medium,,,Done
+Task,,[EPIC] Monitoring & Observability,"Add Prometheus auto-instrumentation to FastAPI","Install prometheus-fastapi-instrumentator, call Instrumentator().instrument(app).expose(app) in main.py",Medium,1,Sprint 3,Done
+Task,,[EPIC] Monitoring & Observability,"Add custom Prometheus metrics in rag_service","Define Counter (queries, errors), Histogram (latency), Gauge (relevance, faithfulness, contextual_relevancy)",Medium,3,Sprint 3,Done
+Task,,[EPIC] Monitoring & Observability,"Create Prometheus scrape configuration","prometheus.yml: scrape api:8000/metrics every 15s, job_name mediassist-api",Medium,1,Sprint 3,Done
+Task,,[EPIC] Monitoring & Observability,"Create Grafana auto-provisioned dashboard","9-panel dashboard JSON: stat panels, gauges, timeseries for HTTP, CPU, memory; auto-loaded on startup",Medium,3,Sprint 3,Done
+Sub-task,,[EPIC] Monitoring & Observability,"Configure Grafana datasource provisioning","datasources.yml: auto-configure Prometheus at http://prometheus:9090 as default datasource",Low,1,Sprint 3,Done
+Sub-task,,[EPIC] Monitoring & Observability,"Configure Grafana dashboard provisioning","dashboards.yml: auto-load JSON dashboards from /var/lib/grafana/dashboards on startup",Low,1,Sprint 3,Done
+Task,,[EPIC] Monitoring & Observability,"Add /health endpoint for Docker healthcheck","GET /health returns 200 OK, used by Docker HEALTHCHECK and load balancers",Low,1,Sprint 3,Done
+Epic,,,"[EPIC] Frontend (Streamlit)","Chat UI, authentication forms, PDF upload",Medium,,,Done
+Task,,[EPIC] Frontend (Streamlit),"Build Streamlit chat interface","Chat display with st.chat_message, chat input with st.chat_input, session state for history",High,3,Sprint 4,Done
+Task,,[EPIC] Frontend (Streamlit),"Implement login and register forms","Sidebar with radio toggle Login/Register, st.form for each, call FastAPI /auth endpoints via requests",High,3,Sprint 4,Done
+Sub-task,,[EPIC] Frontend (Streamlit),"Manage JWT token in session state","Store token after login, attach as Bearer header to all API calls, clear on logout",Medium,1,Sprint 4,Done
+Task,,[EPIC] Frontend (Streamlit),"Implement PDF upload in sidebar","st.file_uploader for PDF, send to /rag/upload-pdf via multipart, show indexed chunk count",Medium,2,Sprint 4,Done
+Task,,[EPIC] Frontend (Streamlit),"Connect chat to RAG backend API","POST /rag/ask with query + chat_history + Bearer token, display answer + expandable sources",High,2,Sprint 4,Done
+Task,,[EPIC] Frontend (Streamlit),"Add logout and clear conversation buttons","Sidebar buttons to reset token/username/history and trigger st.rerun()",Low,1,Sprint 4,Done
+Epic,,,"[EPIC] Testing & Quality","Unit tests, integration tests, code quality",Medium,,,Done
+Task,,[EPIC] Testing & Quality,"Write unit tests for authentication","Test register, login, duplicate user, invalid credentials, JWT token generation (6 tests)",High,3,Sprint 4,Done
+Task,,[EPIC] Testing & Quality,"Write unit tests for RAG pipeline","Test PDF indexing, query processing, empty query handling, deduplication (6 tests)",High,3,Sprint 4,Done
+Task,,[EPIC] Testing & Quality,"Write unit tests for API endpoints","Test /health, /rag/ask with auth, /rag/upload-pdf, unauthorized access (6 tests)",High,3,Sprint 4,Done
+Task,,[EPIC] Testing & Quality,"Configure pytest with fixtures","pytest.ini, conftest.py with test database, test client, mock user fixtures",Medium,2,Sprint 4,Done
+Epic,,,"[EPIC] Documentation & Delivery","README, architecture diagram, deployment guide",Low,,,Done
+Task,,[EPIC] Documentation & Delivery,"Write comprehensive README.md","Project overview, architecture diagram, setup instructions, API reference, monitoring docs",Medium,3,Sprint 4,Done
+Task,,[EPIC] Documentation & Delivery,"Create .env.example template","Document all required environment variables with placeholder values",Low,1,Sprint 4,Done
+Task,,[EPIC] Documentation & Delivery,"Final Docker build and smoke test","docker compose up --build, verify all 4 containers healthy, test registration + query + Grafana",High,2,Sprint 4,Done

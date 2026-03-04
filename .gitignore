@@ -1,0 +1,46 @@
+# Python
+__pycache__/
+*.py[cod]
+*.pyo
+*.egg-info/
+dist/
+build/
+*.egg
+
+# Virtual environment
+.venv/
+venv/
+env/
+
+# Environment variables
+.env
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# OS
+Thumbs.db
+.DS_Store
+
+# Docker
+*.log
+
+# ML artifacts (too large for GitHub)
+mlruns/
+mlflow.db
+chroma_db/
+
+# DeepEval
+.deepeval/
+
+# Pytest
+.pytest_cache/
+
+# Data files
+*.pdf
+
+# Misc
+*.sqlite3
